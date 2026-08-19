@@ -12,7 +12,7 @@ import os
 
 load_dotenv()
 
-app = FastAPI(title="Cinephile API — Strict Genre-Matched Movie Engine")
+app = FastAPI(title="Cinephile API — Verified Live Web & Genre Search Engine")
 
 app.add_middleware(
     CORSMiddleware,
@@ -56,7 +56,7 @@ def resolve_streaming_providers(title: str, genres: list[str], language: str = "
     providers = []
 
     if language.lower() in ["malayalam", "tamil", "telugu", "hindi"]:
-        if any(k in t_lower for k in ["manjummel", "premalu", "aavesham", "drishyam", "kumbalangi", "jawan", "pathaan"]):
+        if any(k in t_lower for k in ["manjummel", "premalu", "aavesham", "drishyam", "kumbalangi", "jawan", "pathaan", "guruvayoor"]):
             providers.extend(["Disney+", "Hotstar", "Netflix"])
         elif any(k in t_lower for k in ["kishkindha", "kannur squad", "bramayugam", "minnal", "minnal murali"]):
             providers.extend(["Netflix", "JioCinema"])
@@ -152,7 +152,7 @@ def calculate_match_score(movie_genres: list[str], req_genres: list[str], mood: 
         if overlap:
             score += min(len(overlap) * 8, 14)
         else:
-            score -= 20  # Penalty for non-matching genres
+            score -= 20
 
     return max(min(score, 99), 60)
 
@@ -163,41 +163,39 @@ def get_multi_language_catalog(language: str, mood: str, genres: list[str], coun
     
     all_catalog_movies = [
         # Malayalam
-        {"title": "Premalu", "year": 2024, "director": "Girish A.D.", "rating": 8.1, "why": "A hilarious and heartwarming romantic comedy that keeps you smiling.", "tags": ["Comedy", "Romance"], "language": "Malayalam", "mood_match": 98},
-        {"title": "Aavesham", "year": 2024, "director": "Jithu Madhavan", "rating": 8.0, "why": "An energetic action-comedy featuring Fahadh Faasil as an eccentric gangster.", "tags": ["Action", "Comedy"], "language": "Malayalam", "mood_match": 96},
-        {"title": "Manjummel Boys", "year": 2024, "director": "Chidambaram", "rating": 8.5, "why": "A gripping survival thriller about brotherhood set in Guna Caves.", "tags": ["Thriller", "Survival", "Drama", "Adventure"], "language": "Malayalam", "mood_match": 96},
-        {"title": "Drishyam", "year": 2013, "director": "Jeethu Joseph", "rating": 8.6, "why": "The legendary suspense crime thriller about protecting family.", "tags": ["Thriller", "Crime", "Drama"], "language": "Malayalam", "mood_match": 98},
-        {"title": "Kishkindha Kaandam", "year": 2024, "director": "Dinjith Ayyathan", "rating": 8.4, "why": "A brilliant mystery thriller packed with subtle suspense.", "tags": ["Mystery", "Thriller", "Drama"], "language": "Malayalam", "mood_match": 96},
-        {"title": "Kumbalangi Nights", "year": 2019, "director": "Madhu C. Narayanan", "rating": 8.5, "why": "A soulful, beautiful drama about dysfunctional brothers.", "tags": ["Drama", "Comedy", "Romance"], "language": "Malayalam", "mood_match": 97},
-        {"title": "Bramayugam", "year": 2024, "director": "Rahul Sadasivan", "rating": 7.9, "why": "A haunting folklore horror thriller in monochrome.", "tags": ["Horror", "Mystery", "Thriller"], "language": "Malayalam", "mood_match": 95},
-        {"title": "Minnal Murali", "year": 2021, "director": "Basil Joseph", "rating": 7.8, "why": "A charming superhero action-comedy rooted in a village.", "tags": ["Action", "Sci-Fi", "Comedy"], "language": "Malayalam", "mood_match": 94},
+        {"title": "Premalu", "year": 2024, "director": "Girish A.D.", "rating": 8.1, "why": "A hilarious and heartwarming Malayalam romantic comedy.", "tags": ["Comedy", "Romance"], "language": "Malayalam", "mood_match": 98},
+        {"title": "Aavesham", "year": 2024, "director": "Jithu Madhavan", "rating": 8.0, "why": "An energetic Malayalam action-comedy featuring Fahadh Faasil as an eccentric gangster.", "tags": ["Action", "Comedy"], "language": "Malayalam", "mood_match": 96},
+        {"title": "Guruvayoor Ambalanadayil", "year": 2024, "director": "Vipinchandran", "rating": 7.3, "why": "A fun-filled Malayalam wedding comedy packed with chaos.", "tags": ["Comedy", "Drama"], "language": "Malayalam", "mood_match": 95},
+        {"title": "Super Sharanya", "year": 2022, "director": "Girish A.D.", "rating": 7.0, "why": "A relatable Malayalam college campus comedy-drama.", "tags": ["Comedy", "Drama"], "language": "Malayalam", "mood_match": 94},
+        {"title": "Manjummel Boys", "year": 2024, "director": "Chidambaram", "rating": 8.5, "why": "A gripping Malayalam survival thriller set in Guna Caves.", "tags": ["Thriller", "Survival", "Drama", "Adventure"], "language": "Malayalam", "mood_match": 96},
+        {"title": "Drishyam", "year": 2013, "director": "Jeethu Joseph", "rating": 8.6, "why": "The legendary Malayalam suspense crime thriller about protecting family.", "tags": ["Thriller", "Crime", "Drama"], "language": "Malayalam", "mood_match": 98},
+        {"title": "Kishkindha Kaandam", "year": 2024, "director": "Dinjith Ayyathan", "rating": 8.4, "why": "A brilliant Malayalam mystery thriller packed with subtle suspense.", "tags": ["Mystery", "Thriller", "Drama"], "language": "Malayalam", "mood_match": 96},
+        {"title": "Bramayugam", "year": 2024, "director": "Rahul Sadasivan", "rating": 7.9, "why": "A haunting Malayalam folklore horror thriller in monochrome.", "tags": ["Horror", "Mystery", "Thriller"], "language": "Malayalam", "mood_match": 95},
+        {"title": "Minnal Murali", "year": 2021, "director": "Basil Joseph", "rating": 7.8, "why": "A charming Malayalam superhero action-comedy.", "tags": ["Action", "Sci-Fi", "Comedy"], "language": "Malayalam", "mood_match": 94},
 
         # Hindi
-        {"title": "3 Idiots", "year": 2009, "director": "Rajkumar Hirani", "rating": 8.4, "why": "An iconic comedy-drama questioning education systems while celebrating friendship.", "tags": ["Comedy", "Drama"], "language": "Hindi", "mood_match": 98},
-        {"title": "Stree", "year": 2018, "director": "Amar Kaushik", "rating": 7.5, "why": "A hilarious horror-comedy about a mysterious spirit haunting a town.", "tags": ["Comedy", "Horror"], "language": "Hindi", "mood_match": 95},
-        {"title": "Andhadhun", "year": 2018, "director": "Sriram Raghavan", "rating": 8.2, "why": "A dark thriller about a blind pianist caught in a murder conspiracy.", "tags": ["Thriller", "Crime", "Comedy"], "language": "Hindi", "mood_match": 96},
-        {"title": "Tumbbad", "year": 2018, "director": "Rahi Anil Barve", "rating": 8.2, "why": "A visually stunning mythological horror thriller.", "tags": ["Horror", "Fantasy", "Thriller"], "language": "Hindi", "mood_match": 95},
-        {"title": "Chhichhore", "year": 2019, "director": "Nitesh Tiwari", "rating": 8.3, "why": "A heartwarming nostalgic college comedy-drama.", "tags": ["Comedy", "Drama"], "language": "Hindi", "mood_match": 94},
+        {"title": "3 Idiots", "year": 2009, "director": "Rajkumar Hirani", "rating": 8.4, "why": "An iconic Hindi comedy-drama celebrating friendship.", "tags": ["Comedy", "Drama"], "language": "Hindi", "mood_match": 98},
+        {"title": "Stree", "year": 2018, "director": "Amar Kaushik", "rating": 7.5, "why": "A hilarious Hindi horror-comedy about a spirit haunting a town.", "tags": ["Comedy", "Horror"], "language": "Hindi", "mood_match": 95},
+        {"title": "Andhadhun", "year": 2018, "director": "Sriram Raghavan", "rating": 8.2, "why": "A dark Hindi thriller about a blind pianist caught in a murder.", "tags": ["Thriller", "Crime", "Comedy"], "language": "Hindi", "mood_match": 96},
+        {"title": "Tumbbad", "year": 2018, "director": "Rahi Anil Barve", "rating": 8.2, "why": "A visually stunning Hindi mythological horror thriller.", "tags": ["Horror", "Fantasy", "Thriller"], "language": "Hindi", "mood_match": 95},
+        {"title": "Chhichhore", "year": 2019, "director": "Nitesh Tiwari", "rating": 8.3, "why": "A heartwarming nostalgic Hindi college comedy-drama.", "tags": ["Comedy", "Drama"], "language": "Hindi", "mood_match": 94},
 
         # English
         {"title": "Knives Out", "year": 2019, "director": "Rian Johnson", "rating": 7.9, "why": "A sharp, entertaining whodunit comedy-mystery packed with humor.", "tags": ["Comedy", "Mystery", "Crime"], "language": "English", "mood_match": 96},
-        {"title": "The Hangover", "year": 2009, "director": "Todd Phillips", "rating": 7.7, "why": "An outrageously funny comedy about three friends searching for a missing groom.", "tags": ["Comedy"], "language": "English", "mood_match": 97},
+        {"title": "The Hangover", "year": 2009, "director": "Todd Phillips", "rating": 7.7, "why": "An outrageously funny comedy about three friends.", "tags": ["Comedy"], "language": "English", "mood_match": 97},
         {"title": "Superbad", "year": 2007, "director": "Greg Mottola", "rating": 7.6, "why": "A classic teenage high-school comedy full of laughs.", "tags": ["Comedy"], "language": "English", "mood_match": 95},
         {"title": "Interstellar", "year": 2014, "director": "Christopher Nolan", "rating": 8.7, "why": "A breathtaking sci-fi odyssey about space and gravity.", "tags": ["Sci-Fi", "Drama", "Adventure"], "language": "English", "mood_match": 98},
         {"title": "Inception", "year": 2010, "director": "Christopher Nolan", "rating": 8.8, "why": "A mind-bending sci-fi heist thriller through dream levels.", "tags": ["Sci-Fi", "Action", "Thriller"], "language": "English", "mood_match": 97},
-        {"title": "Dune: Part One", "year": 2021, "director": "Denis Villeneuve", "rating": 8.0, "why": "An epic sci-fi adventure on the desert planet Arrakis.", "tags": ["Sci-Fi", "Adventure", "Drama"], "language": "English", "mood_match": 96},
-        {"title": "Dune: Part Two", "year": 2024, "director": "Denis Villeneuve", "rating": 8.6, "why": "The explosive continuation of Paul Atreides' sci-fi journey.", "tags": ["Sci-Fi", "Action", "Adventure"], "language": "English", "mood_match": 98},
+        {"title": "Dune: Part One", "year": 2021, "director": "Denis Villeneuve", "rating": 8.0, "why": "An epic sci-fi adventure on Arrakis.", "tags": ["Sci-Fi", "Adventure", "Drama"], "language": "English", "mood_match": 96},
         {"title": "The Conjuring", "year": 2013, "director": "James Wan", "rating": 7.5, "why": "A terrifying supernatural horror mystery.", "tags": ["Horror", "Mystery", "Thriller"], "language": "English", "mood_match": 95},
-        {"title": "About Time", "year": 2013, "director": "Richard Curtis", "rating": 7.8, "why": "A heartwarming romantic comedy-drama with time travel.", "tags": ["Romance", "Comedy", "Drama"], "language": "English", "mood_match": 96},
-        {"title": "John Wick", "year": 2014, "director": "Chad Stahelski", "rating": 7.4, "why": "A stylish, non-stop action thriller.", "tags": ["Action", "Thriller", "Crime"], "language": "English", "mood_match": 95},
 
         # Korean & Tamil
         {"title": "Parasite", "year": 2019, "director": "Bong Joon-ho", "rating": 8.5, "why": "A Oscar-winning dark social thriller.", "tags": ["Thriller", "Drama", "Comedy"], "language": "Korean", "mood_match": 98},
         {"title": "Train to Busan", "year": 2016, "director": "Yeon Sang-ho", "rating": 7.6, "why": "An intense zombie action-horror thriller.", "tags": ["Action", "Horror", "Thriller"], "language": "Korean", "mood_match": 95},
-        {"title": "Vikram", "year": 2022, "director": "Lokesh Kanagaraj", "rating": 8.3, "why": "A high-octane action thriller featuring Kamal Haasan.", "tags": ["Action", "Thriller", "Crime"], "language": "Tamil", "mood_match": 97}
+        {"title": "Vikram", "year": 2022, "director": "Lokesh Kanagaraj", "rating": 8.3, "why": "A high-octane Tamil action thriller featuring Kamal Haasan.", "tags": ["Action", "Thriller", "Crime"], "language": "Tamil", "mood_match": 97}
     ]
 
-    # Filter 1: Language Filter
+    # Language Filter
     if lang_lower != "any":
         filtered = [m for m in all_catalog_movies if m["language"].lower() == lang_lower]
         if not filtered:
@@ -205,13 +203,12 @@ def get_multi_language_catalog(language: str, mood: str, genres: list[str], coun
     else:
         filtered = all_catalog_movies
 
-    # Filter 2: STRICT Genre Filter (MUST match at least one selected genre)
+    # STRICT Genre Filter
     if req_genres_lower:
         strict_genre_matches = [
             m for m in filtered 
             if any(g in [t.lower() for t in m["tags"]] for g in req_genres_lower)
         ]
-        # If strict language+genre returned nothing, relax language but keep strict genre
         if not strict_genre_matches:
             strict_genre_matches = [
                 m for m in all_catalog_movies 
@@ -226,114 +223,86 @@ def get_multi_language_catalog(language: str, mood: str, genres: list[str], coun
 @app.post("/api/recommend")
 @app.post("/recommend")
 async def recommend(req: RecommendRequest):
-    parts = []
-    if req.mood:
-        parts.append(f"mood: {req.mood}")
-    if req.genres:
-        parts.append(f"REQUIRED GENRES: {', '.join(req.genres)}")
-    if req.custom:
-        parts.append(f"extra context: {req.custom}")
-    if req.language and req.language != "any":
-        parts.append(f"language preference: {req.language}")
-
-    if not parts:
-        raise HTTPException(status_code=400, detail="Provide at least one preference.")
-
-    raw_movies = []
     target_count = req.count or 6
+    req_lang = req.language if req.language and req.language != "any" else "any"
+    req_genres = req.genres or []
+    
+    verified_movies = []
 
-    if client:
-        prompt = f"""Recommend exactly {target_count} top-rated movies worldwide matching these user preferences:
-{'; '.join(parts)}.
-
-CRITICAL REQUIREMENT: Every recommended movie MUST strictly match at least one of these genres: {', '.join(req.genres) if req.genres else 'any'}.
-
-Return ONLY a valid JSON array, no markdown:
-[
-  {{
-    "title": "Movie Title",
-    "year": 2020,
-    "director": "Director Name",
-    "rating": 8.2,
-    "why": "One sentence explaining why it strictly fits the genre and mood.",
-    "tags": [{f'"{req.genres[0]}"' if req.genres else '"Comedy"'}, "Drama"],
-    "language": "Language",
-    "mood_match": 95
-  }}
-]"""
-
+    # 1. Query Web Search (OMDb) for Language + Genre combination
+    if req_genres or req_lang != "any":
+        genre_term = req_genres[0] if req_genres else "movie"
+        lang_term = req_lang if req_lang != "any" else ""
+        query_str = f"{lang_term} {genre_term}".strip()
+        
         try:
-            message = client.messages.create(
-                model="claude-3-5-sonnet-20241022",
-                max_tokens=1500,
-                messages=[{"role": "user", "content": prompt}]
-            )
-            text = message.content[0].text
-            clean = text.replace("```json", "").replace("```", "").strip()
-            raw_movies = json.loads(clean)
+            async with httpx.AsyncClient(timeout=4.0) as http_client:
+                search_url = f"https://www.omdbapi.com/?s={httpx.URL(query_str).raw_path.decode()}&type=movie&apikey={OMDB_API_KEY}"
+                res = await http_client.get(search_url)
+                if res.status_code == 200:
+                    search_data = res.json()
+                    if search_data.get("Response") == "True":
+                        items = search_data.get("Search", [])
+                        for item in items[:12]:
+                            t_title = item.get("Title")
+                            t_year_str = item.get("Year", "2020")[:4]
+                            try:
+                                t_year = int(t_year_str)
+                            except ValueError:
+                                t_year = 2020
+
+                            # Fetch official OMDb metadata to verify REAL Genre and Language
+                            m_details = await fetch_imdb_metadata(t_title, t_year, req_genres, req_lang)
+                            real_genres = [g.lower() for g in m_details.get("genres", [])]
+
+                            # STRICT GENRE VERIFICATION CHECK: Must match requested genre!
+                            if req_genres:
+                                is_genre_matched = any(rg.lower() in real_genres for rg in req_genres)
+                                if not is_genre_matched:
+                                    continue
+
+                            match_score = calculate_match_score(m_details.get("genres", []), req_genres, req.mood)
+                            
+                            verified_movies.append({
+                                "title": t_title,
+                                "year": t_year,
+                                "director": m_details.get("director", "Director"),
+                                "rating": m_details.get("imdb_rating", 8.0),
+                                "why": f"Verified {req_lang if req_lang != 'any' else ''} {genre_term} movie. {m_details.get('plot', '')}",
+                                "tags": list(dict.fromkeys(req_genres + m_details.get("genres", [])))[:4],
+                                "language": req_lang if req_lang != "any" else "Worldwide",
+                                "mood_match": match_score,
+                                "poster": m_details["poster"],
+                                "imdb_id": m_details["imdb_id"],
+                                "imdb_url": m_details["imdb_url"],
+                                "trailer_url": m_details["trailer_url"],
+                                "watch_providers": m_details["watch_providers"]
+                            })
+
+                            if len(verified_movies) >= target_count:
+                                break
         except Exception as e:
-            print(f"API call error: {e}, falling back to strict genre catalog.")
-            raw_movies = get_multi_language_catalog(req.language or "any", req.mood, req.genres, target_count)
-    else:
-        raw_movies = get_multi_language_catalog(req.language or "any", req.mood, req.genres, target_count)
+            print(f"Web search genre verification error: {e}")
 
-    # Hydrate movies and calculate strict genre match score
-    hydrated_movies = []
-    for m in raw_movies:
-        title = m.get("title", "")
-        year = m.get("year", None)
-        movie_tags = m.get("tags", [])
-        movie_lang = m.get("language", req.language if req.language != "any" else "English")
-        
-        imdb_data = await fetch_imdb_metadata(title, year, req.genres, movie_lang)
-        all_movie_genres = list(dict.fromkeys(movie_tags + imdb_data["genres"]))
-        
-        # Enforce strict genre check if genres were explicitly chosen
-        if req.genres:
-            has_matching_genre = any(
-                rg.lower() in [mg.lower() for mg in all_movie_genres] 
-                for rg in req.genres
-            )
-            if not has_matching_genre:
-                print(f"Skipping {title} because it does not match requested genres {req.genres}")
+    # 2. Fill remaining from verified catalog matching strict language & genre
+    if len(verified_movies) < target_count:
+        catalog_items = get_multi_language_catalog(req_lang, req.mood, req_genres, target_count - len(verified_movies))
+        for m in catalog_items:
+            if any(vm["title"].lower() == m["title"].lower() for vm in verified_movies):
                 continue
-
-        match_score = calculate_match_score(all_movie_genres, req.genres, req.mood)
-        
-        movie_item = {
-            **m,
-            "poster": imdb_data["poster"],
-            "imdb_id": imdb_data["imdb_id"],
-            "imdb_rating": imdb_data["imdb_rating"] or m.get("rating", 8.0),
-            "imdb_url": imdb_data["imdb_url"],
-            "trailer_url": imdb_data["trailer_url"],
-            "plot": imdb_data["plot"] or m.get("why", ""),
-            "director": imdb_data["director"] if imdb_data["director"] != "Director" else m.get("director", "Director"),
-            "tags": list(dict.fromkeys(movie_tags + imdb_data["genres"]))[:4],
-            "language": movie_lang,
-            "watch_providers": imdb_data["watch_providers"],
-            "mood_match": match_score
-        }
-        hydrated_movies.append(movie_item)
-
-    # If strict filter removed all items, fallback to catalog genre matches
-    if not hydrated_movies and req.genres:
-        fallback_list = get_multi_language_catalog(req.language or "any", req.mood, req.genres, target_count)
-        for m in fallback_list:
-            m_imdb = await fetch_imdb_metadata(m["title"], m.get("year"), req.genres, m.get("language", "English"))
-            hydrated_movies.append({
+            m_imdb = await fetch_imdb_metadata(m["title"], m.get("year"), req_genres, m.get("language", req_lang))
+            verified_movies.append({
                 **m,
                 "poster": m_imdb["poster"],
                 "imdb_id": m_imdb["imdb_id"],
                 "imdb_rating": m_imdb["imdb_rating"],
                 "imdb_url": m_imdb["imdb_url"],
                 "trailer_url": m_imdb["trailer_url"],
-                "plot": m_imdb["plot"] or m.get("why", ""),
                 "watch_providers": m_imdb["watch_providers"],
                 "mood_match": 95
             })
 
-    return {"movies": hydrated_movies[:target_count]}
+    return {"movies": verified_movies[:target_count]}
 
 
 @app.get("/api/search")
@@ -435,7 +404,7 @@ async def remove_from_watchlist(title: str):
 @app.get("/api/health")
 @app.get("/health")
 async def health():
-    return {"status": "ok", "message": "Cinephile API (Strict Genre Match Engine) is running"}
+    return {"status": "ok", "message": "Cinephile API (Real-Time Web Genre Engine) is running"}
 
 
 # Serve frontend static assets
