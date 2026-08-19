@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Cinephile — AI & Official Streaming Discovery Engine</title>
+<title>Cinephile — AI, Genre-Matched Search & Streaming Discovery</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 <style>
   :root {
@@ -49,7 +49,7 @@
   .watchlist-btn:hover { border-color: var(--accent); background: var(--surface3); box-shadow: 0 0 15px var(--accent-glow); }
   .wl-count { background: var(--accent); color: #0c0c0e; border-radius: 999px; padding: 2px 8px; font-size: 11px; font-weight: 700; }
 
-  /* Security / Notice banner */
+  /* Security notice */
   .security-notice {
     background: rgba(245,197,24,0.08); border: 1px solid rgba(245,197,24,0.25); border-radius: 10px;
     padding: 10px 14px; margin-bottom: 2rem; font-size: 12px; color: rgba(244,241,234,0.85);
@@ -137,6 +137,8 @@
   .results-title { font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--text); }
   .results-count { font-size: 13px; color: var(--muted); background: var(--surface2); padding: 4px 12px; border-radius: 999px; border: 1px solid var(--border); }
 
+  .genre-matched-header { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--accent); margin: 2rem 0 1rem; border-top: 1px solid var(--border); padding-top: 1.5rem; display: flex; align-items: center; gap: 8px; }
+
   /* Movies Cards Grid */
   .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
 
@@ -146,6 +148,7 @@
     animation: fadeUp 0.4s ease both; position: relative; cursor: pointer;
   }
   .movie-card:hover { border-color: var(--accent); transform: translateY(-5px); box-shadow: 0 14px 35px rgba(0,0,0,0.5); }
+  .movie-card.featured-card { border: 1.5px solid var(--accent); box-shadow: 0 0 25px var(--accent-glow); }
 
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(16px); }
@@ -163,6 +166,7 @@
   }
   .top-pills { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
   .match-badge { background: var(--green); color: #000; font-weight: 700; font-size: 11px; padding: 3px 8px; border-radius: 999px; }
+  .exact-badge { background: var(--accent); color: #000; font-weight: 700; font-size: 11px; padding: 3px 8px; border-radius: 999px; }
   .lang-badge { background: rgba(255,255,255,0.15); color: var(--text); font-weight: 600; font-size: 11px; padding: 3px 8px; border-radius: 4px; backdrop-filter: blur(4px); }
   .imdb-badge { background: var(--accent); color: #000; font-weight: 700; font-size: 11px; padding: 3px 8px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; text-decoration: none; }
 
@@ -261,7 +265,7 @@
 <div class="layout">
   <header>
     <div class="logo">
-      <div class="logo-name">Cine<em>phile</em> <span class="badge-hdr">OFFICIAL STREAMING DISCOVERY</span></div>
+      <div class="logo-name">Cine<em>phile</em> <span class="badge-hdr">GENRE-MATCHED DISCOVERY</span></div>
       <div class="logo-sub">AI Movie Recommendation & Verified Streaming Platform Finder</div>
     </div>
     <div class="header-actions">
@@ -275,14 +279,13 @@
     <span>🛡️ <strong>Official & Verified Streaming:</strong> For safety and high quality, Cinephile connects with verified platforms (Netflix, Prime Video, Disney+, Apple TV, YouTube Movies, and IMDb).</span>
   </div>
 
-
   <div class="main">
     <!-- Sidebar Controls -->
     <div class="sidebar">
-      <div class="field-label">Instant Worldwide Search</div>
+      <div class="field-label">Search Movie + Auto Genre Match</div>
       <div class="search-box">
         <span class="search-icon">🔍</span>
-        <input type="text" class="search-input" id="search-input" placeholder="Search any movie worldwide..." onkeydown="handleSearchKey(event)" />
+        <input type="text" class="search-input" id="search-input" placeholder="Type any movie name e.g. Inception..." onkeydown="handleSearchKey(event)" />
       </div>
 
       <div class="field-label">Select Language</div>
@@ -357,14 +360,14 @@
     <div class="results-area">
       <div class="results-header">
         <div class="results-title" id="results-title">Movie Discoveries</div>
-        <div class="results-count" id="results-count">Select language, mood or genres</div>
+        <div class="results-count" id="results-count">Search movie or select genres</div>
       </div>
       <div id="error-zone"></div>
       <div id="cards-zone">
         <div class="empty-state">
           <div class="empty-icon">🎬</div>
-          <div class="empty-text">Your Official Movie & Streaming Finder</div>
-          <div class="empty-sub">Pick Malayalam, Hindi, Korean, Tamil, or English to find movies with live posters & verified streaming links</div>
+          <div class="empty-text">Search Any Movie for Genre-Matched Recommendations</div>
+          <div class="empty-sub">Type a movie in search (e.g. Inception, Drishyam, Parasite) to get the exact movie + top related movies in the same genre</div>
         </div>
       </div>
     </div>
@@ -372,7 +375,7 @@
 
   <footer>
     Built with <strong>FastAPI + Anthropic Claude + Multi-Language Catalog + Official Streaming Platforms</strong> &nbsp;|&nbsp;
-    CineMatch 2026
+    Cinephile 2026
   </footer>
 </div>
 
@@ -432,7 +435,6 @@ function getPlatformSearchUrl(platform, title) {
   return `https://www.google.com/search?q=watch+${encoded}+movie+on+${encodeURIComponent(platform)}`;
 }
 
-
 function getProviderBadgeClass(provider) {
   const p = provider.toLowerCase();
   if (p.includes('netflix')) return 'provider-netflix';
@@ -451,13 +453,15 @@ async function performIMDbSearch() {
   if (!query) return;
 
   document.getElementById('error-zone').innerHTML = '';
-  document.getElementById('results-title').textContent = `Search Results: "${query}"`;
-  document.getElementById('cards-zone').innerHTML = renderSkeletons(4);
+  document.getElementById('results-title').textContent = `Search: "${query}"`;
+  document.getElementById('cards-zone').innerHTML = renderSkeletons(6);
 
   try {
     const res = await fetch(`${API}/api/search?q=${encodeURIComponent(query)}`);
     const data = await res.json();
     const movies = data.movies || [];
+    const targetMovie = data.target_movie || movies[0];
+    const genres = data.genres || (targetMovie ? targetMovie.tags : []);
 
     if (movies.length === 0) {
       document.getElementById('cards-zone').innerHTML = `
@@ -471,8 +475,37 @@ async function performIMDbSearch() {
       return;
     }
 
-    document.getElementById('results-count').textContent = `${movies.length} matches found`;
-    document.getElementById('cards-zone').innerHTML = `<div class="cards-grid">${movies.map((m, i) => renderCard(m, i)).join('')}</div>`;
+    document.getElementById('results-count').textContent = `1 Exact Match + ${movies.length - 1} Genre Suggestions`;
+    
+    let html = '';
+    // Render Target Movie Featured Section
+    if (targetMovie) {
+      html += `
+        <div style="margin-bottom: 2rem;">
+          <div style="font-size: 13px; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+            🎯 Searched Movie Result
+          </div>
+          <div class="cards-grid">
+            ${renderCard(targetMovie, 0, true)}
+          </div>
+        </div>
+      `;
+    }
+
+    // Render Related Movies in the same genre
+    const relatedList = movies.filter(m => m.title !== targetMovie?.title);
+    if (relatedList.length > 0) {
+      html += `
+        <div class="genre-matched-header">
+          <span>🍿 Related Movies in the Same Genre (${(genres || []).join(', ')})</span>
+        </div>
+        <div class="cards-grid">
+          ${relatedList.map((m, i) => renderCard(m, i + 1)).join('')}
+        </div>
+      `;
+    }
+
+    document.getElementById('cards-zone').innerHTML = html;
   } catch (e) {
     document.getElementById('error-zone').innerHTML = `<div class="error-banner">Search Error: ${e.message}</div>`;
   }
@@ -491,7 +524,7 @@ function renderSkeletons(count = 6) {
   `).join('')}</div>`;
 }
 
-function renderCard(movie, idx) {
+function renderCard(movie, idx, isFeatured = false) {
   const inWl = watchlist.some(w => w.title === movie.title);
   const posterUrl = movie.poster && movie.poster.startsWith('http') 
     ? movie.poster 
@@ -504,12 +537,12 @@ function renderCard(movie, idx) {
   const platformSearchUrl = getPlatformSearchUrl(primaryProvider, movie.title);
 
   return `
-    <div class="movie-card" onclick="openMovieDetails('${detailUrl}', event)" style="animation-delay:${idx * 0.08}s" title="Click to view details on IMDb">
+    <div class="movie-card ${isFeatured ? 'featured-card' : ''}" onclick="openMovieDetails('${detailUrl}', event)" style="animation-delay:${idx * 0.08}s" title="Click to view details on IMDb">
       <div class="poster-container">
         <img src="${posterUrl}" class="poster-img" alt="${movie.title}" onerror="this.src='https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=600&q=80'" />
         <div class="poster-overlay">
           <div class="top-pills">
-            <span class="match-badge">${movie.mood_match || 92}% Match</span>
+            ${isFeatured ? '<span class="exact-badge">🎯 Exact Match</span>' : `<span class="match-badge">${movie.mood_match || 92}% Match</span>`}
             <span class="lang-badge">${langText}</span>
             <span class="imdb-badge" onclick="openMovieDetails('${detailUrl}', event)">
               <span>IMDb</span> <span>${movie.imdb_rating || '8.0'}</span> ★
@@ -651,7 +684,7 @@ function openWatchlist() {
   document.getElementById('overlay').classList.add('show');
 }
 function closeWatchlist() {
-  document.getElementById('wl-panel').classList.remove('open');
+  document.getElementById('wl-panel').classList.remove('remove');
   document.getElementById('overlay').classList.remove('show');
 }
 

@@ -12,7 +12,7 @@ import os
 
 load_dotenv()
 
-app = FastAPI(title="Cinephile API — Multi-Language Worldwide Engine")
+app = FastAPI(title="Cinephile API — Multi-Language & Genre-Matched Search Engine")
 
 app.add_middleware(
     CORSMiddleware,
@@ -51,7 +51,7 @@ watchlist: list[dict] = []
 
 
 def resolve_streaming_providers(title: str, genres: list[str], language: str = "English") -> list[str]:
-    """Determine streaming platforms (Netflix, Prime Video, Disney+, Apple TV, Max, Hotstar, JioCinema, ManoramaMAX, Simply South) based on movie & language."""
+    """Determine streaming platforms (Netflix, Prime Video, Disney+, Apple TV, Max, Hotstar, JioCinema) based on movie & language."""
     t_lower = title.lower()
     providers = []
 
@@ -68,7 +68,7 @@ def resolve_streaming_providers(title: str, genres: list[str], language: str = "
         else:
             providers.extend(["Netflix", "Apple TV"])
     else:
-        if any(k in t_lower for k in ["interstellar", "dark knight", "dune", "inception", "oppenheimer"]):
+        if any(k in t_lower for k in ["interstellar", "dark knight", "dune", "inception", "oppenheimer", "matrix"]):
             providers.extend(["Max", "Prime Video", "Apple TV"])
         elif "Sci-Fi" in genres or "Action" in genres:
             providers.extend(["Max", "Prime Video"])
@@ -120,7 +120,8 @@ async def fetch_imdb_metadata(title: str, year: Optional[int] = None, requested_
                         "plot": data.get("Plot", ""),
                         "director": data.get("Director", "Director"),
                         "genres": all_genres,
-                        "watch_providers": watch_providers
+                        "watch_providers": watch_providers,
+                        "year": data.get("Year", year or 2020)
                     }
     except Exception as e:
         print(f"IMDb fetch error for {title}: {e}")
@@ -136,7 +137,8 @@ async def fetch_imdb_metadata(title: str, year: Optional[int] = None, requested_
         "plot": "",
         "director": "Director",
         "genres": genres_list or ["Cinema"],
-        "watch_providers": watch_providers
+        "watch_providers": watch_providers,
+        "year": year or 2020
     }
 
 
@@ -156,7 +158,6 @@ def calculate_match_score(movie_genres: list[str], req_genres: list[str], mood: 
 def get_multi_language_catalog(language: str, mood: str, genres: list[str], count: int = 6) -> list[dict]:
     lang_lower = (language or "any").lower()
     
-    # 🌴 Malayalam Movie Catalog
     malayalam_movies = [
         {"title": "Manjummel Boys", "year": 2024, "director": "Chidambaram", "rating": 8.5, "why": "A gripping survival thriller about brotherhood, bravery, and friendship set in Guna Caves.", "tags": ["Thriller", "Survival", "Drama"], "language": "Malayalam", "mood_match": 98},
         {"title": "Drishyam", "year": 2013, "director": "Jeethu Joseph", "rating": 8.6, "why": "A legendary suspense crime thriller about a family man protecting his loved ones.", "tags": ["Thriller", "Crime", "Drama"], "language": "Malayalam", "mood_match": 97},
@@ -168,7 +169,6 @@ def get_multi_language_catalog(language: str, mood: str, genres: list[str], coun
         {"title": "Minnal Murali", "year": 2021, "director": "Basil Joseph", "rating": 7.8, "why": "A charming superhero tale rooted in a small Kerala village with heart and humor.", "tags": ["Action", "Sci-Fi", "Comedy"], "language": "Malayalam", "mood_match": 93}
     ]
 
-    # 🇮🇳 Hindi Movie Catalog
     hindi_movies = [
         {"title": "3 Idiots", "year": 2009, "director": "Rajkumar Hirani", "rating": 8.4, "why": "An iconic comedy-drama questioning education systems while celebrating friendship.", "tags": ["Comedy", "Drama"], "language": "Hindi", "mood_match": 98},
         {"title": "Andhadhun", "year": 2018, "director": "Sriram Raghavan", "rating": 8.2, "why": "A dark thriller about a blind pianist caught in a murder conspiracy.", "tags": ["Thriller", "Crime", "Comedy"], "language": "Hindi", "mood_match": 96},
@@ -178,7 +178,6 @@ def get_multi_language_catalog(language: str, mood: str, genres: list[str], coun
         {"title": "Chhichhore", "year": 2019, "director": "Nitesh Tiwari", "rating": 8.3, "why": "A heartwarming nostalgic college drama celebrating life and friendship.", "tags": ["Comedy", "Drama"], "language": "Hindi", "mood_match": 94}
     ]
 
-    # 🎬 Tamil Movie Catalog
     tamil_movies = [
         {"title": "Vikram", "year": 2022, "director": "Lokesh Kanagaraj", "rating": 8.3, "why": "A high-octane action thriller featuring Kamal Haasan, Vijay Sethupathi, and Fahadh Faasil.", "tags": ["Action", "Thriller", "Crime"], "language": "Tamil", "mood_match": 97},
         {"title": "Jai Bhim", "year": 2021, "director": "T. J. Gnanavel", "rating": 8.8, "why": "A powerful court drama fighting for tribal rights and justice.", "tags": ["Drama", "Crime"], "language": "Tamil", "mood_match": 98},
@@ -186,7 +185,6 @@ def get_multi_language_catalog(language: str, mood: str, genres: list[str], coun
         {"title": "Kaithi", "year": 2019, "director": "Lokesh Kanagaraj", "rating": 8.5, "why": "A relentless night-long action thriller about an ex-convict helping cops.", "tags": ["Action", "Thriller"], "language": "Tamil", "mood_match": 95}
     ]
 
-    # 🇰🇷 Korean Movie Catalog
     korean_movies = [
         {"title": "Parasite", "year": 2019, "director": "Bong Joon-ho", "rating": 8.5, "why": "A Oscar-winning dark social thriller with gripping twists and satire.", "tags": ["Thriller", "Drama", "Crime"], "language": "Korean", "mood_match": 98},
         {"title": "Train to Busan", "year": 2016, "director": "Yeon Sang-ho", "rating": 7.6, "why": "An intense, emotional zombie action thriller set aboard a speeding train.", "tags": ["Action", "Horror", "Thriller"], "language": "Korean", "mood_match": 95},
@@ -194,7 +192,6 @@ def get_multi_language_catalog(language: str, mood: str, genres: list[str], coun
         {"title": "Oldboy", "year": 2003, "director": "Park Chan-wook", "rating": 8.4, "why": "A neo-noir revenge thriller famous for its hallway fight and twist ending.", "tags": ["Action", "Mystery", "Thriller"], "language": "Korean", "mood_match": 97}
     ]
 
-    # 🇺🇸 English / Worldwide Catalog
     english_movies = [
         {"title": "Interstellar", "year": 2014, "director": "Christopher Nolan", "rating": 8.7, "why": "A breathtaking sci-fi odyssey about space, gravity, and human love.", "tags": ["Sci-Fi", "Drama", "Adventure"], "language": "English", "mood_match": 98},
         {"title": "Inception", "year": 2010, "director": "Christopher Nolan", "rating": 8.8, "why": "A mind-bending heist thriller through subconscious dream levels.", "tags": ["Sci-Fi", "Action", "Thriller"], "language": "English", "mood_match": 97},
@@ -270,7 +267,6 @@ mood_match is an integer 0-100 representing how well the movie matches the given
     else:
         raw_movies = get_multi_language_catalog(req.language or "any", req.mood, req.genres, target_count)
 
-    # Hydrate all recommendations with real IMDb metadata, watch platforms, and language tags
     hydrated_movies = []
     for m in raw_movies:
         title = m.get("title", "")
@@ -303,51 +299,104 @@ mood_match is an integer 0-100 representing how well the movie matches the given
 @app.get("/api/search")
 @app.get("/search")
 async def search_movies(q: str = Query(..., min_length=1)):
-    """Search worldwide & regional movies directly from real-time IMDb database."""
+    """Search target movie AND auto-suggest related movies matching its exact genre!"""
+    target_data = await fetch_imdb_metadata(q)
+    target_title = q
+    target_genres = target_data["genres"] or ["Cinema"]
+    
+    # Try fetching exact match metadata from OMDb
     try:
         async with httpx.AsyncClient(timeout=4.0) as http_client:
-            url = f"https://www.omdbapi.com/?s={httpx.URL(q).raw_path.decode()}&type=movie&apikey={OMDB_API_KEY}"
-            res = await http_client.get(url)
+            res = await http_client.get(f"https://www.omdbapi.com/?t={httpx.URL(q).raw_path.decode()}&apikey={OMDB_API_KEY}")
             if res.status_code == 200:
                 data = res.json()
                 if data.get("Response") == "True":
-                    search_results = data.get("Search", [])
-                    movies = []
-                    for item in search_results[:6]:
-                        title = item.get("Title")
-                        year_str = item.get("Year", "2020")[:4]
-                        try:
-                            year = int(year_str)
-                        except ValueError:
-                            year = 2020
-                        
-                        imdb_id = item.get("imdbID", "")
-                        poster = item.get("Poster", "")
-                        if poster == "N/A" or not poster.startswith("http"):
-                            poster = "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=600&q=80"
-                        
-                        watch_providers = resolve_streaming_providers(title, ["Cinema"], "English")
-
-                        movies.append({
-                            "title": title,
-                            "year": year,
-                            "director": "IMDb Worldwide",
-                            "rating": 8.0,
-                            "why": f"Global IMDb entry matching search '{q}'.",
-                            "tags": ["IMDb Pick", "Movie"],
-                            "language": "Worldwide",
-                            "mood_match": 95,
-                            "poster": poster,
-                            "imdb_id": imdb_id,
-                            "imdb_url": f"https://www.imdb.com/title/{imdb_id}/" if imdb_id else f"https://www.imdb.com/find/?q={httpx.URL(title).raw_path.decode()}",
-                            "trailer_url": f"https://www.youtube.com/results?search_query={httpx.URL(title + ' ' + str(year) + ' official trailer').raw_path.decode()}",
-                            "watch_providers": watch_providers
-                        })
-                    return {"movies": movies}
+                    target_title = data.get("Title", q)
+                    g_raw = data.get("Genre", "")
+                    if g_raw:
+                        target_genres = [g.strip() for g in g_raw.split(",") if g.strip()]
     except Exception as e:
-        print(f"Search error: {e}")
-        
-    return {"movies": []}
+        print(f"Target movie search fetch error: {e}")
+
+    # Build target movie response item
+    target_movie = {
+        "title": target_title,
+        "year": target_data.get("year", 2020),
+        "director": target_data.get("director", "Director"),
+        "rating": target_data.get("imdb_rating", 8.2),
+        "why": f"Exact match for '{target_title}'. {target_data.get('plot', '')}",
+        "tags": target_genres,
+        "language": "Exact Match",
+        "mood_match": 100,
+        "poster": target_data["poster"],
+        "imdb_id": target_data["imdb_id"],
+        "imdb_url": target_data["imdb_url"],
+        "trailer_url": target_data["trailer_url"],
+        "watch_providers": target_data["watch_providers"]
+    }
+
+    # Fetch 5 Related movies matching the target movie's exact genres!
+    raw_related = []
+    if client:
+        prompt = f"""Target movie: "{target_title}" with genres: {', '.join(target_genres)}.
+Recommend 5 top-rated worldwide movies that share the exact same genre ({', '.join(target_genres)}) and feel similar to "{target_title}".
+
+Return ONLY a valid JSON array, no markdown:
+[
+  {{
+    "title": "Movie Title",
+    "year": 2020,
+    "director": "Director Name",
+    "rating": 8.3,
+    "why": "One sentence explaining why it shares the exact genre and vibe of {target_title}.",
+    "tags": ["{target_genres[0] if target_genres else 'Cinema'}"],
+    "language": "English",
+    "mood_match": 95
+  }}
+]"""
+        try:
+            message = client.messages.create(
+                model="claude-3-5-sonnet-20241022",
+                max_tokens=1200,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            text = message.content[0].text
+            clean = text.replace("```json", "").replace("```", "").strip()
+            raw_related = json.loads(clean)
+        except Exception as e:
+            print(f"AI related query error: {e}")
+            raw_related = get_multi_language_catalog("any", "adventurous", target_genres, 5)
+    else:
+        raw_related = get_multi_language_catalog("any", "adventurous", target_genres, 5)
+
+    # Hydrate related movies with posters & IMDb data
+    related_movies = []
+    for m in raw_related:
+        r_title = m.get("title", "")
+        r_year = m.get("year", None)
+        if r_title.lower() == target_title.lower():
+            continue
+            
+        r_imdb = await fetch_imdb_metadata(r_title, r_year, target_genres)
+        related_movies.append({
+            **m,
+            "poster": r_imdb["poster"],
+            "imdb_id": r_imdb["imdb_id"],
+            "imdb_rating": r_imdb["imdb_rating"] or m.get("rating", 8.0),
+            "imdb_url": r_imdb["imdb_url"],
+            "trailer_url": r_imdb["trailer_url"],
+            "plot": r_imdb["plot"] or m.get("why", ""),
+            "director": r_imdb["director"] if r_imdb["director"] != "Director" else m.get("director", "Director"),
+            "tags": list(dict.fromkeys((m.get("tags", []) + r_imdb["genres"] + target_genres)))[:4],
+            "watch_providers": r_imdb["watch_providers"],
+            "mood_match": 94
+        })
+
+    return {
+        "target_movie": target_movie,
+        "genres": target_genres,
+        "movies": [target_movie] + related_movies
+    }
 
 
 @app.get("/api/watchlist")
@@ -376,8 +425,7 @@ async def remove_from_watchlist(title: str):
 @app.get("/api/health")
 @app.get("/health")
 async def health():
-    return {"status": "ok", "message": "Cinephile API (Multi-Language Engine) is running"}
-
+    return {"status": "ok", "message": "Cinephile API (Genre-Matched Search Engine) is running"}
 
 
 # Serve frontend static assets
