@@ -413,12 +413,23 @@ function handleSearchKey(event) {
   }
 }
 
+function openWebSearch(title, year, imdbUrl, event) {
+  if (event) event.stopPropagation();
+  if (imdbUrl && imdbUrl.startsWith('http') && imdbUrl.includes('imdb.com/title/')) {
+    window.open(imdbUrl, '_blank');
+  } else {
+    const query = encodeURIComponent(`${title} ${year || ''} movie`);
+    window.open(`https://www.google.com/search?q=${query}`, '_blank');
+  }
+}
+
 function openMovieDetails(url, event) {
   if (event) event.stopPropagation();
   if (url) {
     window.open(url, '_blank');
   }
 }
+
 
 function getPlatformSearchUrl(platform, title) {
   const encoded = encodeURIComponent(title);
@@ -505,19 +516,20 @@ function renderCard(movie, idx) {
   const platformSearchUrl = getPlatformSearchUrl(primaryProvider, movie.title);
 
   return `
-    <div class="movie-card" onclick="openMovieDetails('${detailUrl}', event)" style="animation-delay:${idx * 0.08}s" title="Click to view details on IMDb">
-      <div class="poster-container">
+    <div class="movie-card" onclick="openWebSearch('${movie.title.replace(/'/g, "\\'")}', '${movie.year}', '${detailUrl}', event)" style="animation-delay:${idx * 0.08}s" title="Click anywhere to search '${movie.title}' in web browser">
+      <div class="poster-container" onclick="openWebSearch('${movie.title.replace(/'/g, "\\'")}', '${movie.year}', '${detailUrl}', event)">
         <img src="${posterUrl}" class="poster-img" alt="${movie.title}" onerror="this.src='https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=600&q=80'" />
         <div class="poster-overlay">
           <div class="top-pills">
             <span class="match-badge">${movie.mood_match || 96}% Match</span>
             <span class="lang-badge">${langText}</span>
-            <span class="imdb-badge" onclick="openMovieDetails('${detailUrl}', event)">
+            <span class="imdb-badge" onclick="openWebSearch('${movie.title.replace(/'/g, "\\'")}', '${movie.year}', '${detailUrl}', event)">
               <span>IMDb</span> <span>${movie.imdb_rating || '8.0'}</span> ★
             </span>
           </div>
         </div>
       </div>
+
       <div class="card-body">
         <div>
           <div class="card-title">${movie.title}</div>
