@@ -107,7 +107,7 @@ async def fetch_imdb_metadata(title: str, year: Optional[int] = None, requested_
                     imdb_genres = [g.strip() for g in data.get("Genre", "").split(",") if g.strip()]
                     all_genres = list(dict.fromkeys(imdb_genres + genres_list))
 
-                    imdb_url = f"https://www.imdb.com/title/{imdb_id}/" if imdb_id else f"https://www.imdb.com/find/?q={httpx.URL(title).raw_path.decode()}"
+                    google_search_url = f"https://www.google.com/search?q={httpx.URL(title + ' ' + str(year or '')).raw_path.decode()}"
                     trailer_url = f"https://www.youtube.com/results?search_query={httpx.URL(title + ' ' + str(year or '') + ' official trailer').raw_path.decode()}"
                     watch_providers = resolve_streaming_providers(title, all_genres, language)
 
@@ -115,7 +115,7 @@ async def fetch_imdb_metadata(title: str, year: Optional[int] = None, requested_
                         "imdb_id": imdb_id,
                         "poster": poster,
                         "imdb_rating": imdb_rating,
-                        "imdb_url": imdb_url,
+                        "imdb_url": google_search_url,
                         "trailer_url": trailer_url,
                         "plot": data.get("Plot", ""),
                         "director": data.get("Director", "Director"),
@@ -132,7 +132,7 @@ async def fetch_imdb_metadata(title: str, year: Optional[int] = None, requested_
         "imdb_id": "",
         "poster": "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=600&q=80",
         "imdb_rating": 8.1,
-        "imdb_url": f"https://www.imdb.com/find/?q={encoded_title}",
+        "imdb_url": f"https://www.google.com/search?q={encoded_title}",
         "trailer_url": f"https://www.youtube.com/results?search_query={encoded_title}+official+trailer",
         "plot": "",
         "director": "Director",
