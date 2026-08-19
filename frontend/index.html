@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CineMatch — AI & Official Streaming Discovery Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #09090c;
+    --surface: #121218;
+    --surface2: #191922;
+    --surface3: #22222e;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.16);
+    --text: #f4f1ea;
+    --muted: rgba(244,241,234,0.55);
+    --faint: rgba(244,241,234,0.22);
+    --accent: #f5c518; /* Official IMDb Yellow */
+    --accent-glow: rgba(245,197,24,0.18);
+    --accent2: #e50914; /* Netflix Red */
+    --green: #46d369;
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; overflow-x: hidden; }
+
+  /* Background Glow */
+  body::after {
+    content: '';
+    position: fixed; top: -15%; right: 10%; width: 55vw; height: 55vw;
+    background: radial-gradient(circle, rgba(245,197,24,0.035) 0%, rgba(0,0,0,0) 70%);
+    pointer-events: none; z-index: 0;
+  }
+
+  .layout { max-width: 1320px; margin: 0 auto; padding: 0 2rem; position: relative; z-index: 1; }
+
+  /* Header */
+  header { padding: 2.2rem 0 1.8rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); margin-bottom: 2.5rem; flex-wrap: wrap; gap: 1rem; }
+  .logo { display: flex; flex-direction: column; }
+  .logo-name { font-family: 'DM Serif Display', serif; font-size: 40px; letter-spacing: -0.02em; color: var(--text); line-height: 1; display: flex; align-items: center; gap: 10px; }
+  .logo-name em { color: var(--accent); font-style: normal; text-shadow: 0 0 20px rgba(245,197,24,0.35); }
+  .logo-sub { font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 6px; font-weight: 500; }
+  
+  .header-actions { display: flex; align-items: center; gap: 12px; }
+  .badge-hdr { background: var(--accent); color: #000; font-weight: 700; font-size: 11px; padding: 4px 8px; border-radius: 4px; letter-spacing: 0.05em; }
+
+  .watchlist-btn { display: flex; align-items: center; gap: 8px; padding: 9px 18px; border: 1px solid var(--border2); border-radius: 999px; background: var(--surface2); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+  .watchlist-btn:hover { border-color: var(--accent); background: var(--surface3); box-shadow: 0 0 15px var(--accent-glow); }
+  .wl-count { background: var(--accent); color: #0c0c0e; border-radius: 999px; padding: 2px 8px; font-size: 11px; font-weight: 700; }
+
+  /* Security / Notice banner */
+  .security-notice {
+    background: rgba(245,197,24,0.08); border: 1px solid rgba(245,197,24,0.25); border-radius: 10px;
+    padding: 10px 14px; margin-bottom: 2rem; font-size: 12px; color: rgba(244,241,234,0.85);
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  }
+  .security-notice strong { color: var(--accent); }
+
+  /* Main Layout */
+  .main { display: grid; grid-template-columns: 340px 1fr; gap: 2.5rem; align-items: start; }
+  @media (max-width: 980px) { .main { grid-template-columns: 1fr; } }
+
+  /* Sidebar */
+  .sidebar { position: sticky; top: 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; }
+  .field-label { font-size: 11px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; font-weight: 600; display: flex; justify-content: space-between; }
+  .field-label span { color: var(--accent); }
+
+  /* Search Input */
+  .search-box { position: relative; margin-bottom: 1.8rem; }
+  .search-input {
+    width: 100%; padding: 11px 14px 11px 36px; border: 1px solid var(--border); border-radius: 10px;
+    background: var(--surface2); color: var(--text); font-family: 'DM Sans', sans-serif;
+    font-size: 13px; outline: none; transition: all 0.2s;
+  }
+  .search-input:focus { border-color: var(--accent); box-shadow: 0 0 10px var(--accent-glow); }
+  .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); opacity: 0.4; font-size: 14px; }
+
+  /* Language Selector Pills */
+  .lang-pills-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 1.8rem; }
+  .lang-pill {
+    padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--surface2); color: var(--muted); font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.15s;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .lang-pill:hover { border-color: var(--border2); color: var(--text); }
+  .lang-pill.active { border-color: var(--accent); color: #000; font-weight: 700; background: var(--accent); box-shadow: 0 0 12px var(--accent-glow); }
+
+  /* Mood Grid */
+  .mood-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1.8rem; }
+  .mood-btn {
+    padding: 10px; border: 1px solid var(--border); border-radius: 8px;
+    background: var(--surface2); color: var(--muted); font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; text-align: center;
+  }
+  .mood-btn:hover { border-color: var(--border2); color: var(--text); }
+  .mood-btn.active { border-color: var(--accent); color: #000; font-weight: 700; background: var(--accent); box-shadow: 0 0 15px var(--accent-glow); }
+
+  /* Genre Chips */
+  .genre-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 1.8rem; max-height: 160px; overflow-y: auto; padding-right: 4px; }
+  .genre-chip {
+    padding: 5px 11px; border-radius: 999px; border: 1px solid var(--border);
+    background: var(--surface2); color: var(--muted); font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.15s;
+  }
+  .genre-chip:hover { border-color: var(--border2); color: var(--text); }
+  .genre-chip.active { border-color: var(--green); color: var(--green); background: rgba(70,211,105,0.12); font-weight: 600; }
+
+  .row-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1.8rem; }
+  .select-box {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px;
+    background: var(--surface2); color: var(--text); font-family: 'DM Sans', sans-serif;
+    font-size: 13px; outline: none; cursor: pointer;
+  }
+
+  textarea {
+    width: 100%; padding: 11px 13px; border: 1px solid var(--border); border-radius: 8px;
+    background: var(--surface2); color: var(--text); font-family: 'DM Sans', sans-serif;
+    font-size: 13px; resize: none; outline: none; line-height: 1.5; margin-bottom: 1.5rem;
+    min-height: 65px;
+  }
+  textarea::placeholder { color: var(--faint); }
+  textarea:focus { border-color: var(--accent); }
+
+  .cta-btn {
+    width: 100%; padding: 13px; border-radius: 10px; border: none;
+    background: var(--accent); color: #000; font-family: 'DM Sans', sans-serif; font-weight: 700;
+    font-size: 15px; cursor: pointer; transition: all 0.2s; letter-spacing: 0.02em;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    box-shadow: 0 4px 20px rgba(245,197,24,0.25);
+  }
+  .cta-btn:hover { background: #ffd633; transform: translateY(-1px); }
+  .cta-btn:active { transform: translateY(0); }
+  .cta-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  /* Results Area */
+  .results-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 10px; }
+  .results-title { font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--text); }
+  .results-count { font-size: 13px; color: var(--muted); background: var(--surface2); padding: 4px 12px; border-radius: 999px; border: 1px solid var(--border); }
+
+  /* Movies Cards Grid */
+  .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+
+  .movie-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    overflow: hidden; display: flex; flex-direction: column; transition: all 0.25s ease;
+    animation: fadeUp 0.4s ease both; position: relative; cursor: pointer;
+  }
+  .movie-card:hover { border-color: var(--accent); transform: translateY(-5px); box-shadow: 0 14px 35px rgba(0,0,0,0.5); }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .poster-container { position: relative; width: 100%; aspect-ratio: 2/3; background: var(--surface2); overflow: hidden; }
+  .poster-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
+  .movie-card:hover .poster-img { transform: scale(1.06); }
+
+  .poster-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(18,18,24,0.96) 90%);
+    display: flex; flex-direction: column; justify-content: space-between; padding: 1rem;
+  }
+  .top-pills { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+  .match-badge { background: var(--green); color: #000; font-weight: 700; font-size: 11px; padding: 3px 8px; border-radius: 999px; }
+  .lang-badge { background: rgba(255,255,255,0.15); color: var(--text); font-weight: 600; font-size: 11px; padding: 3px 8px; border-radius: 4px; backdrop-filter: blur(4px); }
+  .imdb-badge { background: var(--accent); color: #000; font-weight: 700; font-size: 11px; padding: 3px 8px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; text-decoration: none; }
+
+  .card-body { padding: 1.2rem; display: flex; flex-direction: column; flex-grow: 1; justify-content: space-between; }
+  .card-title { font-family: 'DM Serif Display', serif; font-size: 21px; color: var(--text); line-height: 1.25; margin-bottom: 4px; }
+  .card-meta { font-size: 12px; color: var(--muted); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  
+  /* Streaming Platforms Badges */
+  .provider-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .provider-label { font-size: 10px; text-transform: uppercase; color: var(--faint); letter-spacing: 0.05em; }
+  .provider-badge { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 4px; color: #fff; text-decoration: none; transition: opacity 0.15s; }
+  .provider-badge:hover { opacity: 0.85; }
+  .provider-netflix { background: #e50914; }
+  .provider-prime { background: #00a8e1; }
+  .provider-disney { background: #113ccf; }
+  .provider-apple { background: #333; }
+  .provider-max { background: #5822b4; }
+  .provider-hulu { background: #1ce783; color: #000; }
+  .provider-hotstar { background: #002b49; }
+  .provider-jiocinema { background: #d71921; }
+  .provider-generic { background: var(--surface3); color: var(--muted); border: 1px solid var(--border); }
+
+  .card-why { font-size: 13px; color: rgba(244,241,234,0.75); line-height: 1.55; margin-bottom: 1rem; flex-grow: 1; }
+
+  .tag-row { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 1rem; }
+  .tag { padding: 3px 9px; border-radius: 999px; border: 1px solid var(--border); font-size: 11px; color: var(--muted); background: var(--surface2); }
+
+  .card-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .action-btn {
+    flex: 1; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--border2);
+    background: var(--surface2); color: var(--text); font-family: 'DM Sans', sans-serif;
+    font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; text-align: center; text-decoration: none;
+    display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-width: 90px;
+  }
+  .action-btn:hover { background: var(--surface3); border-color: var(--text); }
+  .action-btn.saved { border-color: var(--accent); color: var(--accent); background: rgba(245,197,24,0.1); }
+  .action-btn.platform-link { border-color: rgba(229,9,20,0.5); color: #ff6b6b; }
+  .action-btn.platform-link:hover { background: rgba(229,9,20,0.15); border-color: #e50914; }
+
+  /* Skeletons */
+  .skeleton-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+  .skeleton-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .skel-poster { width: 100%; aspect-ratio: 2/3; background: var(--surface2); animation: pulse 1.4s infinite; }
+  .skel-body { padding: 1.2rem; }
+  .skel-line { background: var(--surface2); border-radius: 4px; margin-bottom: 10px; animation: pulse 1.4s infinite; }
+  @keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:0.7} }
+
+  /* Empty state */
+  .empty-state { text-align: center; padding: 5rem 2rem; grid-column: 1 / -1; }
+  .empty-icon { font-size: 48px; margin-bottom: 1rem; opacity: 0.4; }
+  .empty-text { font-family: 'DM Serif Display', serif; font-size: 24px; color: var(--muted); }
+  .empty-sub { font-size: 13px; color: var(--faint); margin-top: 6px; }
+
+  /* Watchlist panel */
+  .wl-panel {
+    position: fixed; top: 0; right: 0; width: 390px; height: 100vh;
+    background: var(--surface); border-left: 1px solid var(--border2);
+    z-index: 100; transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow-y: auto; padding: 2rem 1.5rem; box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+  }
+  .wl-panel.open { transform: translateX(0); }
+  .wl-panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.8rem; }
+  .wl-panel-title { font-family: 'DM Serif Display', serif; font-size: 22px; }
+  .close-wl { background: none; border: none; color: var(--muted); font-size: 22px; cursor: pointer; padding: 4px; }
+
+  .wl-item { display: flex; gap: 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
+  .wl-thumb { width: 50px; height: 74px; border-radius: 6px; object-fit: cover; background: var(--surface2); }
+  .wl-info { flex-grow: 1; }
+  .wl-item-title { font-size: 14px; color: var(--text); font-weight: 600; }
+  .wl-item-year { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .wl-remove { background: none; border: none; color: var(--faint); cursor: pointer; font-size: 18px; padding: 4px; transition: color 0.15s; }
+  .wl-remove:hover { color: var(--accent2); }
+
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 99; display: none; }
+  .overlay.show { display: block; }
+
+  .error-banner { background: rgba(229,9,20,0.15); border: 1px solid rgba(229,9,20,0.4); border-radius: 10px; padding: 12px 16px; font-size: 13px; color: #ff6b6b; margin-bottom: 1.5rem; }
+
+  footer { border-top: 1px solid var(--border); margin-top: 5rem; padding: 2.5rem 0; text-align: center; font-size: 13px; color: var(--muted); }
+  footer strong { color: var(--text); }
+</style>
+</head>
+<body>
+
+<div class="overlay" id="overlay" onclick="closeWatchlist()"></div>
+
+<!-- Watchlist Panel -->
+<div class="wl-panel" id="wl-panel">
+  <div class="wl-panel-header">
+    <span class="wl-panel-title">My Saved Watchlist</span>
+    <button class="close-wl" onclick="closeWatchlist()">✕</button>
+  </div>
+  <div id="wl-items"><div class="empty-sub" style="text-align:center;padding:3rem 0;">Nothing saved yet.</div></div>
+</div>
+
+<div class="layout">
+  <header>
+    <div class="logo">
+      <div class="logo-name">Cine<em>Match</em> <span class="badge-hdr">OFFICIAL STREAMING DISCOVERY</span></div>
+      <div class="logo-sub">AI Movie Recommendation & Verified Streaming Platform Finder</div>
+    </div>
+    <div class="header-actions">
+      <button class="watchlist-btn" onclick="openWatchlist()">
+        ☰ Watchlist <span class="wl-count" id="wl-count">0</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="security-notice">
+    <span>🛡️ <strong>Official & Verified Streaming:</strong> For safety and high quality, CineMatch connects with verified platforms (Netflix, Prime Video, Disney+, Apple TV, YouTube Movies, and IMDb).</span>
+  </div>
+
+  <div class="main">
+    <!-- Sidebar Controls -->
+    <div class="sidebar">
+      <div class="field-label">Instant Worldwide Search</div>
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" id="search-input" placeholder="Search any movie worldwide..." onkeydown="handleSearchKey(event)" />
+      </div>
+
+      <div class="field-label">Select Language</div>
+      <div class="lang-pills-wrap">
+        <span class="lang-pill active" onclick="selectLang(this,'any')">🌐 Any</span>
+        <span class="lang-pill" onclick="selectLang(this,'Malayalam')">🌴 Malayalam</span>
+        <span class="lang-pill" onclick="selectLang(this,'Hindi')">🇮🇳 Hindi</span>
+        <span class="lang-pill" onclick="selectLang(this,'Tamil')">🎬 Tamil</span>
+        <span class="lang-pill" onclick="selectLang(this,'Korean')">🇰🇷 Korean</span>
+        <span class="lang-pill" onclick="selectLang(this,'Japanese')">🇯🇵 Japanese</span>
+        <span class="lang-pill" onclick="selectLang(this,'English')">🇺🇸 English</span>
+        <span class="lang-pill" onclick="selectLang(this,'Spanish')">🇪🇸 Spanish</span>
+        <span class="lang-pill" onclick="selectLang(this,'French')">🇫🇷 French</span>
+      </div>
+
+      <div class="field-label">Your Mood</div>
+      <div class="mood-grid">
+        <button class="mood-btn" onclick="selectMood(this,'adventurous')">Adventurous</button>
+        <button class="mood-btn" onclick="selectMood(this,'cozy')">Cozy</button>
+        <button class="mood-btn" onclick="selectMood(this,'thoughtful')">Thoughtful</button>
+        <button class="mood-btn" onclick="selectMood(this,'excited')">Excited</button>
+        <button class="mood-btn" onclick="selectMood(this,'melancholic')">Melancholic</button>
+        <button class="mood-btn" onclick="selectMood(this,'bored')">Super Bored</button>
+      </div>
+
+      <div class="field-label">Genres <span>Select multiple</span></div>
+      <div class="genre-wrap">
+        <span class="genre-chip" onclick="toggleGenre(this,'Sci-Fi')">Sci-Fi</span>
+        <span class="genre-chip" onclick="toggleGenre(this,'Action')">Action</span>
+        <span class="genre-chip" onclick="toggleGenre(this,'Thriller')">Thriller</span>
+        <span class="genre-chip" onclick="toggleGenre(this,'Comedy')">Comedy</span>
+        <span class="genre-chip" onclick="toggleGenre(this,'Drama')">Drama</span>
+        <span class="genre-chip" onclick="toggleGenre(this,'Horror')">Horror</span>
+        <span class="genre-chip" onclick="toggleGenre(this,'Romance')">Romance</span>
+        <span class="genre-chip" onclick="toggleGenre(this,'Animation')">Animation</span>
+        <span class="genre-chip" onclick="toggleGenre(this,'Fantasy')">Fantasy</span>
+        <span class="genre-chip" onclick="toggleGenre(this,'Mystery')">Mystery</span>
+        <span class="genre-chip" onclick="toggleGenre(this,'Crime')">Crime</span>
+        <span class="genre-chip" onclick="toggleGenre(this,'Adventure')">Adventure</span>
+      </div>
+
+      <div class="row-2col">
+        <div>
+          <div class="field-label">Picks Count</div>
+          <select class="select-box" id="count-select">
+            <option value="6">6 Movies</option>
+            <option value="4">4 Movies</option>
+            <option value="8">8 Movies</option>
+          </select>
+        </div>
+        <div>
+          <div class="field-label">Platform</div>
+          <select class="select-box" id="provider-filter">
+            <option value="any">Any Platform</option>
+            <option value="Netflix">Netflix</option>
+            <option value="Prime Video">Prime Video</option>
+            <option value="Disney+">Disney+</option>
+            <option value="Apple TV">Apple TV</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field-label">Custom Preferences</div>
+      <textarea id="custom-input" placeholder="e.g. Malayalam thrillers or movies available on Netflix/Prime Video..."></textarea>
+
+      <button class="cta-btn" id="recommend-btn" onclick="getRecommendations()">
+        <span>✨ Discover Movies</span>
+      </button>
+    </div>
+
+    <!-- Results Area -->
+    <div class="results-area">
+      <div class="results-header">
+        <div class="results-title" id="results-title">Movie Discoveries</div>
+        <div class="results-count" id="results-count">Select language, mood or genres</div>
+      </div>
+      <div id="error-zone"></div>
+      <div id="cards-zone">
+        <div class="empty-state">
+          <div class="empty-icon">🎬</div>
+          <div class="empty-text">Your Official Movie & Streaming Finder</div>
+          <div class="empty-sub">Pick Malayalam, Hindi, Korean, Tamil, or English to find movies with live posters & verified streaming links</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Built with <strong>FastAPI + Anthropic Claude + Multi-Language Catalog + Official Streaming Platforms</strong> &nbsp;|&nbsp;
+    CineMatch 2026
+  </footer>
+</div>
+
+<script>
+const API = window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:8005';
+
+let selectedLang = 'any';
+let selectedMood = '';
+let selectedGenres = [];
+let watchlist = [];
+
+function selectLang(el, lang) {
+  document.querySelectorAll('.lang-pill').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  selectedLang = lang;
+}
+
+function selectMood(el, mood) {
+  document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  selectedMood = mood;
+}
+
+function toggleGenre(el, genre) {
+  if (el.classList.contains('active')) {
+    el.classList.remove('active');
+    selectedGenres = selectedGenres.filter(g => g !== genre);
+  } else {
+    el.classList.add('active');
+    selectedGenres.push(genre);
+  }
+}
+
+function handleSearchKey(event) {
+  if (event.key === 'Enter') {
+    performIMDbSearch();
+  }
+}
+
+function openMovieDetails(url, event) {
+  if (event) event.stopPropagation();
+  if (url) {
+    window.open(url, '_blank');
+  }
+}
+
+function getPlatformSearchUrl(platform, title) {
+  const encoded = encodeURIComponent(title);
+  const p = platform.toLowerCase();
+  if (p.includes('netflix')) return `https://www.netflix.com/search?q=${encoded}`;
+  if (p.includes('prime')) return `https://www.primevideo.com/search?k=${encoded}`;
+  if (p.includes('hotstar') || p.includes('disney')) return `https://www.hotstar.com/in/explore?search=${encoded}`;
+  if (p.includes('jio')) return `https://www.jiocinema.com/search/${encoded}`;
+  if (p.includes('apple')) return `https://tv.apple.com/search?term=${encoded}`;
+  if (p.includes('max') || p.includes('hbo')) return `https://www.max.com/`;
+  if (p.includes('hulu')) return `https://www.hulu.com/search?q=${encoded}`;
+  return `https://www.google.com/search?q=watch+${encoded}+movie+on+${encodeURIComponent(platform)}`;
+}
+
+
+function getProviderBadgeClass(provider) {
+  const p = provider.toLowerCase();
+  if (p.includes('netflix')) return 'provider-netflix';
+  if (p.includes('prime')) return 'provider-prime';
+  if (p.includes('disney')) return 'provider-disney';
+  if (p.includes('apple')) return 'provider-apple';
+  if (p.includes('max') || p.includes('hbo')) return 'provider-max';
+  if (p.includes('hulu')) return 'provider-hulu';
+  if (p.includes('hotstar')) return 'provider-hotstar';
+  if (p.includes('jio')) return 'provider-jiocinema';
+  return 'provider-generic';
+}
+
+async function performIMDbSearch() {
+  const query = document.getElementById('search-input').value.trim();
+  if (!query) return;
+
+  document.getElementById('error-zone').innerHTML = '';
+  document.getElementById('results-title').textContent = `Search Results: "${query}"`;
+  document.getElementById('cards-zone').innerHTML = renderSkeletons(4);
+
+  try {
+    const res = await fetch(`${API}/api/search?q=${encodeURIComponent(query)}`);
+    const data = await res.json();
+    const movies = data.movies || [];
+
+    if (movies.length === 0) {
+      document.getElementById('cards-zone').innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">🔍</div>
+          <div class="empty-text">No movie matches found</div>
+          <div class="empty-sub">Try searching with another movie title</div>
+        </div>
+      `;
+      document.getElementById('results-count').textContent = '0 results';
+      return;
+    }
+
+    document.getElementById('results-count').textContent = `${movies.length} matches found`;
+    document.getElementById('cards-zone').innerHTML = `<div class="cards-grid">${movies.map((m, i) => renderCard(m, i)).join('')}</div>`;
+  } catch (e) {
+    document.getElementById('error-zone').innerHTML = `<div class="error-banner">Search Error: ${e.message}</div>`;
+  }
+}
+
+function renderSkeletons(count = 6) {
+  return `<div class="skeleton-grid">${Array(count).fill(0).map(() => `
+    <div class="skeleton-card">
+      <div class="skel-poster"></div>
+      <div class="skel-body">
+        <div class="skel-line" style="width:70%;height:20px;"></div>
+        <div class="skel-line" style="width:40%;height:14px;"></div>
+        <div class="skel-line" style="width:90%;height:14px;"></div>
+      </div>
+    </div>
+  `).join('')}</div>`;
+}
+
+function renderCard(movie, idx) {
+  const inWl = watchlist.some(w => w.title === movie.title);
+  const posterUrl = movie.poster && movie.poster.startsWith('http') 
+    ? movie.poster 
+    : 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=600&q=80';
+
+  const providers = movie.watch_providers || ['Netflix', 'Prime Video'];
+  const detailUrl = movie.imdb_url || `https://www.google.com/search?q=${encodeURIComponent(movie.title + ' ' + movie.year + ' movie')}`;
+  const langText = movie.language || 'Movie';
+  const primaryProvider = providers[0] || 'Netflix';
+  const platformSearchUrl = getPlatformSearchUrl(primaryProvider, movie.title);
+
+  return `
+    <div class="movie-card" onclick="openMovieDetails('${detailUrl}', event)" style="animation-delay:${idx * 0.08}s" title="Click to view details on IMDb">
+      <div class="poster-container">
+        <img src="${posterUrl}" class="poster-img" alt="${movie.title}" onerror="this.src='https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=600&q=80'" />
+        <div class="poster-overlay">
+          <div class="top-pills">
+            <span class="match-badge">${movie.mood_match || 92}% Match</span>
+            <span class="lang-badge">${langText}</span>
+            <span class="imdb-badge" onclick="openMovieDetails('${detailUrl}', event)">
+              <span>IMDb</span> <span>${movie.imdb_rating || '8.0'}</span> ★
+            </span>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div>
+          <div class="card-title">${movie.title}</div>
+          <div class="card-meta">
+            <span>${movie.year}</span> • <span>${movie.director || 'Director'}</span>
+          </div>
+          
+          <div class="provider-row">
+            <span class="provider-label">Watch on:</span>
+            ${providers.map(p => `
+              <a href="${getPlatformSearchUrl(p, movie.title)}" target="_blank" onclick="event.stopPropagation()" class="provider-badge ${getProviderBadgeClass(p)}" title="Search on ${p}">
+                ${p}
+              </a>
+            `).join('')}
+          </div>
+
+          <div class="card-why">${movie.why || movie.plot || ''}</div>
+          <div class="tag-row">
+            ${(movie.tags || []).map(t => `<span class="tag">${t}</span>`).join('')}
+          </div>
+        </div>
+
+        <div class="card-actions">
+          <button class="action-btn platform-link" onclick="openMovieDetails('${platformSearchUrl}', event)" title="Watch on ${primaryProvider}">
+            ▶ Stream on ${primaryProvider}
+          </button>
+          <button class="action-btn" onclick="openMovieDetails('${movie.trailer_url}', event)">
+            Trailer
+          </button>
+          <button class="action-btn ${inWl ? 'saved' : ''}" onclick="toggleWatchlist(event, this, ${JSON.stringify(movie).replace(/"/g, '&quot;')})">
+            ${inWl ? '✓ Saved' : '+ Save'}
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+async function getRecommendations() {
+  const custom = document.getElementById('custom-input').value.trim();
+  const count = parseInt(document.getElementById('count-select').value, 10);
+
+  if (selectedLang === 'any' && !selectedMood && !custom && selectedGenres.length === 0) {
+    document.getElementById('error-zone').innerHTML = `<div class="error-banner">Please select a language, mood, or genre(s).</div>`;
+    return;
+  }
+
+  document.getElementById('error-zone').innerHTML = '';
+  const btn = document.getElementById('recommend-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span>⚡ Fetching Movies & Verified Streaming...</span>';
+  document.getElementById('cards-zone').innerHTML = renderSkeletons(count);
+
+  try {
+    const res = await fetch(`${API}/api/recommend`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mood: selectedMood, genres: selectedGenres, custom, language: selectedLang, count: count })
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || 'Server error');
+    }
+
+    const data = await res.json();
+    const movies = data.movies || [];
+
+    const titlePrefix = selectedLang !== 'any' ? `${selectedLang} Movies` : 'Movie Picks';
+    document.getElementById('results-title').textContent = selectedMood 
+      ? `${titlePrefix} for a ${selectedMood} mood` 
+      : `${titlePrefix} Recommendations`;
+    document.getElementById('results-count').textContent = `${movies.length} movies matches`;
+    document.getElementById('cards-zone').innerHTML = `<div class="cards-grid">${movies.map((m, i) => renderCard(m, i)).join('')}</div>`;
+  } catch (e) {
+    document.getElementById('error-zone').innerHTML = `<div class="error-banner">Error: ${e.message}</div>`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span>✨ Discover Movies</span>';
+  }
+}
+
+async function toggleWatchlist(event, btn, movie) {
+  if (event) event.stopPropagation();
+  const inWl = watchlist.some(w => w.title === movie.title);
+  if (inWl) {
+    await fetch(`${API}/api/watchlist/${encodeURIComponent(movie.title)}`, { method: 'DELETE' });
+    watchlist = watchlist.filter(w => w.title !== movie.title);
+    btn.textContent = '+ Save';
+    btn.classList.remove('saved');
+  } else {
+    await fetch(`${API}/api/watchlist`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: movie.title, year: movie.year, tags: movie.tags || [], poster: movie.poster, imdb_rating: movie.imdb_rating, imdb_url: movie.imdb_url, watch_providers: movie.watch_providers, language: movie.language })
+    });
+    watchlist.push(movie);
+    btn.textContent = '✓ Saved';
+    btn.classList.add('saved');
+  }
+  updateWatchlistUI();
+}
+
+function updateWatchlistUI() {
+  document.getElementById('wl-count').textContent = watchlist.length;
+  const container = document.getElementById('wl-items');
+  if (watchlist.length === 0) {
+    container.innerHTML = '<div class="empty-sub" style="text-align:center;padding:3rem 0;">Nothing saved yet.</div>';
+    return;
+  }
+  container.innerHTML = watchlist.map(m => `
+    <div class="wl-item" onclick="openMovieDetails('${m.imdb_url}')">
+      <img src="${m.poster || 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=600&q=80'}" class="wl-thumb" alt="${m.title}" />
+      <div class="wl-info">
+        <div class="wl-item-title">${m.title}</div>
+        <div class="wl-item-year">${m.year} • ${m.language || 'Movie'} • IMDb ${m.imdb_rating || '8.0'}★</div>
+      </div>
+      <button class="wl-remove" onclick="removeFromWl(event, '${m.title}')">✕</button>
+    </div>
+  `).join('');
+}
+
+async function removeFromWl(event, title) {
+  if (event) event.stopPropagation();
+  await fetch(`${API}/api/watchlist/${encodeURIComponent(title)}`, { method: 'DELETE' });
+  watchlist = watchlist.filter(w => w.title !== title);
+  updateWatchlistUI();
+}
+
+function openWatchlist() {
+  document.getElementById('wl-panel').classList.add('open');
+  document.getElementById('overlay').classList.add('show');
+}
+function closeWatchlist() {
+  document.getElementById('wl-panel').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+}
+
+// Initial load
+async function init() {
+  try {
+    const res = await fetch(`${API}/api/watchlist`);
+    const data = await res.json();
+    watchlist = data.watchlist || [];
+    updateWatchlistUI();
+  } catch (e) { }
+}
+init();
+</script>
+</body>
+</html>
