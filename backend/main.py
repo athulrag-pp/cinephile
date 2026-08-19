@@ -12,7 +12,7 @@ import os
 
 load_dotenv()
 
-app = FastAPI(title="CineMatch API — Multi-Language Worldwide Engine")
+app = FastAPI(title="Cinephile API — Multi-Language Worldwide Engine")
 
 app.add_middleware(
     CORSMiddleware,
