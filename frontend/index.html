@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Cinephile — AI, Genre-Matched Search & Streaming Discovery</title>
+<title>Cinephile — All Movie Parts, Sequels & Streaming Discovery</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 <style>
   :root {
@@ -137,8 +137,6 @@
   .results-title { font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--text); }
   .results-count { font-size: 13px; color: var(--muted); background: var(--surface2); padding: 4px 12px; border-radius: 999px; border: 1px solid var(--border); }
 
-  .genre-matched-header { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--accent); margin: 2rem 0 1rem; border-top: 1px solid var(--border); padding-top: 1.5rem; display: flex; align-items: center; gap: 8px; }
-
   /* Movies Cards Grid */
   .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
 
@@ -265,7 +263,7 @@
 <div class="layout">
   <header>
     <div class="logo">
-      <div class="logo-name">Cine<em>phile</em> <span class="badge-hdr">GENRE-MATCHED DISCOVERY</span></div>
+      <div class="logo-name">Cine<em>phile</em> <span class="badge-hdr">PARTS & FRANCHISE ENGINE</span></div>
       <div class="logo-sub">AI Movie Recommendation & Verified Streaming Platform Finder</div>
     </div>
     <div class="header-actions">
@@ -282,10 +280,10 @@
   <div class="main">
     <!-- Sidebar Controls -->
     <div class="sidebar">
-      <div class="field-label">Search Movie + Auto Genre Match</div>
+      <div class="field-label">Search Any Movie Parts / Franchises</div>
       <div class="search-box">
         <span class="search-icon">🔍</span>
-        <input type="text" class="search-input" id="search-input" placeholder="Type any movie name e.g. Inception..." onkeydown="handleSearchKey(event)" />
+        <input type="text" class="search-input" id="search-input" placeholder="Type movie e.g. Drishyam, Avatar, Dune..." onkeydown="handleSearchKey(event)" />
       </div>
 
       <div class="field-label">Select Language</div>
@@ -360,14 +358,14 @@
     <div class="results-area">
       <div class="results-header">
         <div class="results-title" id="results-title">Movie Discoveries</div>
-        <div class="results-count" id="results-count">Search movie or select genres</div>
+        <div class="results-count" id="results-count">Type movie title to see Part 1, Part 2, etc.</div>
       </div>
       <div id="error-zone"></div>
       <div id="cards-zone">
         <div class="empty-state">
           <div class="empty-icon">🎬</div>
-          <div class="empty-text">Search Any Movie for Genre-Matched Recommendations</div>
-          <div class="empty-sub">Type a movie in search (e.g. Inception, Drishyam, Parasite) to get the exact movie + top related movies in the same genre</div>
+          <div class="empty-text">Search Any Franchise or Movie Name</div>
+          <div class="empty-sub">Search "Drishyam", "Avatar", "Dune", "Batman", or "KGF" to see all parts (Part 1, Part 2, Part 3) with live posters & streaming links</div>
         </div>
       </div>
     </div>
@@ -453,15 +451,14 @@ async function performIMDbSearch() {
   if (!query) return;
 
   document.getElementById('error-zone').innerHTML = '';
-  document.getElementById('results-title').textContent = `Search: "${query}"`;
+  document.getElementById('results-title').textContent = `All Parts & Entries for "${query}"`;
   document.getElementById('cards-zone').innerHTML = renderSkeletons(6);
 
   try {
     const res = await fetch(`${API}/api/search?q=${encodeURIComponent(query)}`);
     const data = await res.json();
     const movies = data.movies || [];
-    const targetMovie = data.target_movie || movies[0];
-    const genres = data.genres || (targetMovie ? targetMovie.tags : []);
+    const search_query = data.search_query || query;
 
     if (movies.length === 0) {
       document.getElementById('cards-zone').innerHTML = `
@@ -475,37 +472,8 @@ async function performIMDbSearch() {
       return;
     }
 
-    document.getElementById('results-count').textContent = `1 Exact Match + ${movies.length - 1} Genre Suggestions`;
-    
-    let html = '';
-    // Render Target Movie Featured Section
-    if (targetMovie) {
-      html += `
-        <div style="margin-bottom: 2rem;">
-          <div style="font-size: 13px; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
-            🎯 Searched Movie Result
-          </div>
-          <div class="cards-grid">
-            ${renderCard(targetMovie, 0, true)}
-          </div>
-        </div>
-      `;
-    }
-
-    // Render Related Movies in the same genre
-    const relatedList = movies.filter(m => m.title !== targetMovie?.title);
-    if (relatedList.length > 0) {
-      html += `
-        <div class="genre-matched-header">
-          <span>🍿 Related Movies in the Same Genre (${(genres || []).join(', ')})</span>
-        </div>
-        <div class="cards-grid">
-          ${relatedList.map((m, i) => renderCard(m, i + 1)).join('')}
-        </div>
-      `;
-    }
-
-    document.getElementById('cards-zone').innerHTML = html;
+    document.getElementById('results-count').textContent = `${movies.length} Movie Parts & Entries Found`;
+    document.getElementById('cards-zone').innerHTML = `<div class="cards-grid">${movies.map((m, i) => renderCard(m, i)).join('')}</div>`;
   } catch (e) {
     document.getElementById('error-zone').innerHTML = `<div class="error-banner">Search Error: ${e.message}</div>`;
   }
@@ -524,7 +492,7 @@ function renderSkeletons(count = 6) {
   `).join('')}</div>`;
 }
 
-function renderCard(movie, idx, isFeatured = false) {
+function renderCard(movie, idx) {
   const inWl = watchlist.some(w => w.title === movie.title);
   const posterUrl = movie.poster && movie.poster.startsWith('http') 
     ? movie.poster 
@@ -537,12 +505,12 @@ function renderCard(movie, idx, isFeatured = false) {
   const platformSearchUrl = getPlatformSearchUrl(primaryProvider, movie.title);
 
   return `
-    <div class="movie-card ${isFeatured ? 'featured-card' : ''}" onclick="openMovieDetails('${detailUrl}', event)" style="animation-delay:${idx * 0.08}s" title="Click to view details on IMDb">
+    <div class="movie-card" onclick="openMovieDetails('${detailUrl}', event)" style="animation-delay:${idx * 0.08}s" title="Click to view details on IMDb">
       <div class="poster-container">
         <img src="${posterUrl}" class="poster-img" alt="${movie.title}" onerror="this.src='https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=600&q=80'" />
         <div class="poster-overlay">
           <div class="top-pills">
-            ${isFeatured ? '<span class="exact-badge">🎯 Exact Match</span>' : `<span class="match-badge">${movie.mood_match || 92}% Match</span>`}
+            <span class="match-badge">${movie.mood_match || 96}% Match</span>
             <span class="lang-badge">${langText}</span>
             <span class="imdb-badge" onclick="openMovieDetails('${detailUrl}', event)">
               <span>IMDb</span> <span>${movie.imdb_rating || '8.0'}</span> ★
@@ -684,7 +652,7 @@ function openWatchlist() {
   document.getElementById('overlay').classList.add('show');
 }
 function closeWatchlist() {
-  document.getElementById('wl-panel').classList.remove('remove');
+  document.getElementById('wl-panel').classList.remove('open');
   document.getElementById('overlay').classList.remove('show');
 }
 
