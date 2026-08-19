@@ -415,20 +415,17 @@ function handleSearchKey(event) {
 
 function openWebSearch(title, year, imdbUrl, event) {
   if (event) event.stopPropagation();
-  if (imdbUrl && imdbUrl.startsWith('http') && imdbUrl.includes('imdb.com/title/')) {
-    window.open(imdbUrl, '_blank');
-  } else {
-    const query = encodeURIComponent(`${title} ${year || ''} movie`);
-    window.open(`https://www.google.com/search?q=${query}`, '_blank');
-  }
+  const query = encodeURIComponent(`${title} ${year || ''} movie`);
+  window.open(`https://www.google.com/search?q=${query}`, '_blank', 'noopener,noreferrer');
 }
 
 function openMovieDetails(url, event) {
   if (event) event.stopPropagation();
   if (url) {
-    window.open(url, '_blank');
+    window.open(url, '_blank', 'noopener,noreferrer');
   }
 }
+
 
 
 function getPlatformSearchUrl(platform, title) {
@@ -540,7 +537,7 @@ function renderCard(movie, idx) {
           <div class="provider-row">
             <span class="provider-label">Watch on:</span>
             ${providers.map(p => `
-              <a href="${getPlatformSearchUrl(p, movie.title)}" target="_blank" onclick="event.stopPropagation()" class="provider-badge ${getProviderBadgeClass(p)}" title="Search on ${p}">
+              <a href="${getPlatformSearchUrl(p, movie.title)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="provider-badge ${getProviderBadgeClass(p)}" title="Search on ${p}">
                 ${p}
               </a>
             `).join('')}
