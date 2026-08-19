@@ -218,6 +218,7 @@ def get_multi_language_catalog(language: str, mood: str, genres: list[str], coun
 
 
 @app.post("/api/recommend")
+@app.post("/recommend")
 async def recommend(req: RecommendRequest):
     parts = []
     if req.mood:
@@ -300,6 +301,7 @@ mood_match is an integer 0-100 representing how well the movie matches the given
 
 
 @app.get("/api/search")
+@app.get("/search")
 async def search_movies(q: str = Query(..., min_length=1)):
     """Search worldwide & regional movies directly from real-time IMDb database."""
     try:
@@ -349,11 +351,13 @@ async def search_movies(q: str = Query(..., min_length=1)):
 
 
 @app.get("/api/watchlist")
+@app.get("/watchlist")
 async def get_watchlist():
     return {"watchlist": watchlist}
 
 
 @app.post("/api/watchlist")
+@app.post("/watchlist")
 async def add_to_watchlist(item: WatchlistItem):
     if any(m["title"] == item.title for m in watchlist):
         return {"message": "Already in watchlist", "watchlist": watchlist}
@@ -362,6 +366,7 @@ async def add_to_watchlist(item: WatchlistItem):
 
 
 @app.delete("/api/watchlist/{title}")
+@app.delete("/watchlist/{title}")
 async def remove_from_watchlist(title: str):
     global watchlist
     watchlist = [m for m in watchlist if m["title"] != title]
@@ -369,8 +374,10 @@ async def remove_from_watchlist(title: str):
 
 
 @app.get("/api/health")
+@app.get("/health")
 async def health():
-    return {"status": "ok", "message": "CineMatch API (Multi-Language Engine) is running"}
+    return {"status": "ok", "message": "Cinephile API (Multi-Language Engine) is running"}
+
 
 
 # Serve frontend static assets
