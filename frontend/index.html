@@ -325,26 +325,15 @@
         <span class="genre-chip" onclick="toggleGenre(this,'Adventure')">Adventure</span>
       </div>
 
-      <div class="row-2col">
-        <div>
-          <div class="field-label">Picks Count</div>
-          <select class="select-box" id="count-select">
-            <option value="12" selected>12 Movies</option>
-            <option value="20">20 Movies</option>
-            <option value="30">30 Movies</option>
-            <option value="50">All Matching Movies (50+)</option>
-          </select>
-        </div>
-        <div>
-          <div class="field-label">Platform</div>
-          <select class="select-box" id="provider-filter">
-            <option value="any">Any Platform</option>
-            <option value="Netflix">Netflix</option>
-            <option value="Prime Video">Prime Video</option>
-            <option value="Disney+">Disney+</option>
-            <option value="Apple TV">Apple TV</option>
-          </select>
-        </div>
+      <div style="margin-bottom: 1.8rem;">
+        <div class="field-label">Streaming Platform</div>
+        <select class="select-box" id="provider-filter">
+          <option value="any">Any Platform (Netflix, Prime Video, Hotstar...)</option>
+          <option value="Netflix">Netflix</option>
+          <option value="Prime Video">Prime Video</option>
+          <option value="Disney+">Disney+ Hotstar</option>
+          <option value="Apple TV">Apple TV</option>
+        </select>
       </div>
 
       <div class="field-label">Custom Preferences</div>
@@ -568,7 +557,7 @@ function renderCard(movie, idx) {
 
 async function getRecommendations() {
   const custom = document.getElementById('custom-input').value.trim();
-  const count = parseInt(document.getElementById('count-select').value, 10);
+  const count = 50; // Automatically fetch all matching movies
 
   if (selectedLang === 'any' && !selectedMood && !custom && selectedGenres.length === 0) {
     document.getElementById('error-zone').innerHTML = `<div class="error-banner">Please select a language, mood, or genre(s).</div>`;
